@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif: Mengurutkan & Membandingkan Pecahan SD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f9ff;
+        }
+        h1, h2, h3, .font-fun {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Format Pecahan Tegak Lurus */
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 4px;
+            font-weight: 700;
+            line-height: 1.1;
+            font-size: 0.95em;
+            margin: 0 2px;
+        }
+        .fraction .top {
+            border-bottom: 2px solid currentColor;
+            padding-bottom: 1px;
+            display: block;
+        }
+        .fraction .bottom {
+            padding-top: 1px;
+            display: block;
+        }
+        .bg-pattern {
+            background-image: radial-gradient(#e0f2fe 2px, transparent 2px);
+            background-size: 24px 24px;
+        }
+        .bounce-gentle {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen text-slate-800 pb-16">
+
+    <!-- HEADER APP -->
+    <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl bounce-gentle">🧩</span>
+                <div>
+                    <h1 class="text-lg sm:text-2xl font-bold tracking-wide">Kuis Pecahan Penyebut Berbeda</h1>
+                    <p class="text-xs text-amber-100">Matematika Kelas 5 SD • 30 Soal Tantangan</p>
+                </div>
+            </div>
+            
+            <!-- Live Progress Status -->
+            <div class="flex items-center space-x-3 text-xs sm:text-sm font-bold bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/20">
+                <div class="text-right">
+                    <div>Terjawab: <span id="answered-count" class="text-amber-200">0</span> / 30</div>
+                    <div>Skor: <span id="live-score" class="text-emerald-300">0</span> Poin</div>
+                </div>
+                <button onclick="confirmReset()" class="bg-rose-600 hover:bg-rose-700 text-white text-xs px-2.5 py-1.5 rounded-xl shadow transition" title="Reset Semua Jawaban">
+                    🔄 Reset
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+
+        <!-- SCORE SUMMARY BANNER -->
+        <div id="completion-banner" class="hidden mb-6 bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-6 rounded-3xl shadow-xl text-center relative overflow-hidden">
+            <div class="text-5xl mb-2 bounce-gentle" id="banner-icon">🏆</div>
+            <h2 class="text-2xl font-bold font-fun" id="banner-title">Luar Biasa! Kamu Telah Selesai!</h2>
+            <p class="text-emerald-100 text-sm mt-1" id="banner-subtitle">Berikut adalah hasil pencapaian kuis pecahanmu:</p>
+            
+            <div class="grid grid-cols-3 gap-3 max-w-md mx-auto mt-4 text-slate-800">
+                <div class="bg-white p-3 rounded-2xl font-bold">
+                    <span class="block text-xs text-slate-500">Skor Akhir</span>
+                    <span id="final-score" class="text-2xl text-emerald-600">0</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl font-bold">
+                    <span class="block text-xs text-slate-500">Jawaban Benar</span>
+                    <span id="final-correct" class="text-2xl text-blue-600">0</span>
+                </div>
+                <div class="bg-white p-3 rounded-2xl font-bold">
+                    <span class="block text-xs text-slate-500">Jawaban Salah</span>
+                    <span id="final-wrong" class="text-2xl text-rose-600">0</span>
+                </div>
+            </div>
+
+            <p class="text-xs text-emerald-100 mt-4 italic">*Progres tersimpan secara otomatis. Kamu dapat memeriksa pembahasan setiap soal di bawah ini.</p>
+        </div>
+
+        <!-- NAVIGATION GRID PALETTE (TOGGLEABLE) -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border-2 border-slate-200 mb-6 transition-all duration-300">
+            <div class="flex justify-between items-center select-none">
+                <h3 class="font-bold text-slate-700 text-sm flex items-center gap-1.5">
+                    <span>📍 Navigasi Nomor Soal</span>
+                </h3>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Legend -->
+                    <div class="hidden sm:flex items-center space-x-2 text-[11px] font-semibold text-slate-500">
+                        <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block mr-1"></span> Belum</span>
+                        <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block mr-1"></span> Benar</span>
+                        <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block mr-1"></span> Salah</span>
+                    </div>
+
+                    <!-- Toggle Button -->
+                    <button onclick="toggleNav()" id="btn-toggle-nav" class="bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-200 transition flex items-center gap-1.5">
+                        <span id="toggle-nav-text">Sembunyikan</span>
+                        <span id="toggle-nav-icon">👁️</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wrapper for collapsible content -->
+            <div id="nav-content-wrapper" class="mt-3 transition-all duration-300">
+                <div id="question-palette" class="grid grid-cols-6 sm:grid-cols-10 gap-1.5 sm:gap-2">
+                    <!-- Palette buttons populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- QUESTION CARD CONTAINER -->
+        <div class="bg-white rounded-3xl p-5 sm:p-8 shadow-xl border-4 border-indigo-100 relative min-h-[380px] flex flex-col justify-between">
+            <div>
+                <!-- Question Header & Progress Bar -->
+                <div class="flex justify-between items-center mb-3">
+                    <span id="question-badge" class="px-3.5 py-1 bg-indigo-100 text-indigo-800 font-bold rounded-full text-xs sm:text-sm">
+                        Soal 1 dari 30
+                    </span>
+                    <span id="status-tag" class="hidden text-xs font-bold px-3 py-1 rounded-full">
+                        <!-- Benar / Salah Tag -->
+                    </span>
+                </div>
+
+                <div class="w-full bg-slate-100 h-2 rounded-full mb-5 overflow-hidden">
+                    <div id="progress-bar-fill" class="bg-indigo-500 h-full transition-all duration-300" style="width: 3.33%"></div>
+                </div>
+
+                <!-- Question Text -->
+                <div id="question-text" class="text-base sm:text-lg font-bold text-slate-800 leading-relaxed mb-6">
+                    <!-- Text inserted by JS -->
+                </div>
+
+                <!-- Answer Options -->
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <!-- Option buttons populated by JS -->
+                </div>
+
+                <!-- Explanation Card (Appears after answered) -->
+                <div id="explanation-box" class="hidden p-4 rounded-2xl border-2 text-xs sm:text-sm leading-relaxed space-y-1">
+                    <!-- Explanation text -->
+                </div>
+            </div>
+
+            <!-- Bottom Navigation Bar -->
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
+                <button id="btn-prev" onclick="prevQuestion()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition flex items-center space-x-1">
+                    <span>⬅️</span> <span>Sebelumnya</span>
+                </button>
+
+                <span class="text-xs font-semibold text-slate-400 hidden sm:inline-block">Gunakan Navigasi atau Tombol Panah</span>
+
+                <button id="btn-next" onclick="nextQuestion()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition flex items-center space-x-1">
+                    <span id="next-btn-text">Selanjutnya</span> <span id="next-btn-icon">➡️</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        /* -------------------------------------------------------------
+           30 SOAL KUIS PECAHAN PENYEBUT BERBEDA (KELAS 5 SD)
+        ------------------------------------------------------------- */
+        const quizQuestions = [
+            {
+                id: 1,
+                q: "Tanda matematika yang tepat untuk membandingkan 1/2 ... 2/5 adalah...",
+                options: [
+                    "1/2 > 2/5",
+                    "1/2 < 2/5",
+                    "1/2 = 2/5",
+                    "Tidak dapat dibandingkan"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>1. KPK penyebut 2 dan 5 adalah 10.<br>2. Ubah pecahan: 1/2 = 5/10 dan 2/5 = 4/10.<br>3. Karena 5 > 4, maka <strong>1/2 > 2/5</strong>."
+            },
+            {
+                id: 2,
+                q: "Manakah pernyataan perbandingan yang benar antara 3/4 dan 5/6 ?",
+                options: [
+                    "3/4 > 5/6",
+                    "3/4 < 5/6",
+                    "3/4 = 5/6",
+                    "3/4 ≥ 5/6"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>1. KPK penyebut 4 dan 6 adalah 12.<br>2. Ubah pecahan: 3/4 = 9/12 dan 5/6 = 10/12.<br>3. Karena 9 < 10, maka <strong>3/4 < 5/6</strong>."
+            },
+            {
+                id: 3,
+                q: "Simbol yang tepat untuk melengkapi 2/3 ... 4/6 adalah...",
+                options: [
+                    ">",
+                    "<",
+                    "=",
+                    "≠"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Ubah 2/3 ke penyebut 6: (2×2)/(3×2) = 4/6.<br>Kedua pecahan nilainya persis sama besar (Pecahan Senilai), jadi tandanya <strong>=</strong>."
+            },
+            {
+                id: 4,
+                q: "Bandingkan kedua pecahan berikut: 3/5 ... 5/8",
+                options: [
+                    ">",
+                    "=",
+                    "≥",
+                    "<"
+                ],
+                ans: 3,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>1. KPK dari 5 dan 8 adalah 40.<br>2. 3/5 = 24/40 dan 5/8 = 25/40.<br>3. Karena 24 < 25, maka <strong>3/5 < 5/8</strong>."
+            },
+            {
+                id: 5,
+                q: "Budi meminum 3/8 liter susu, sedangkan Siti meminum 2/5 liter susu. Siapakah yang meminum susu lebih banyak?",
+                options: [
+                    "Siti",
+                    "Budi",
+                    "Keduanya sama banyak",
+                    "Tidak bisa ditentukan"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan ke penyebut 40 (KPK 8 dan 5):<br>• Budi = 15/40 liter.<br>• Siti = 16/40 liter.<br>Siti meminum lebih banyak susu daripada Budi."
+            },
+            {
+                id: 6,
+                q: "Urutkan pecahan berikut dari yang TERKECIL: 1/3, 1/2, 1/4",
+                options: [
+                    "1/2, 1/3, 1/4",
+                    "1/4, 1/3, 1/2",
+                    "1/3, 1/4, 1/2",
+                    "1/4, 1/2, 1/3"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 3, 2, 4 adalah 12.<br>• 1/3 = 4/12<br>• 1/2 = 6/12<br>• 1/4 = 3/12<br>Urutan pembilang dari terkecil: 3, 4, 6 ➔ <strong>1/4, 1/3, 1/2</strong>."
+            },
+            {
+                id: 7,
+                q: "Urutkan pecahan berikut dari yang TERBESAR: 2/5, 3/4, 1/2",
+                options: [
+                    "2/5, 1/2, 3/4",
+                    "1/2, 3/4, 2/5",
+                    "3/4, 1/2, 2/5",
+                    "3/4, 2/5, 1/2"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 5, 4, 2 adalah 20.<br>• 2/5 = 8/20<br>• 3/4 = 15/20<br>• 1/2 = 10/20<br>Urutan dari terbesar: 15/20, 10/20, 8/20 ➔ <strong>3/4, 1/2, 2/5</strong>."
+            },
+            {
+                id: 8,
+                q: "Manakah di antara pecahan berikut yang nilainya LEBIH BESAR dari 1/2 ?",
+                options: [
+                    "2/5",
+                    "3/8",
+                    "4/10",
+                    "4/6"
+                ],
+                ans: 3,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>1/2 sama dengan 3/6.<br>Pecahan 4/6 jelas lebih besar daripada 3/6 (1/2)."
+            },
+            {
+                id: 9,
+                q: "Manakah pecahan di bawah ini yang nilainya LEBIH KECIL dari 2/3 ?",
+                options: [
+                    "3/4",
+                    "1/2",
+                    "5/6",
+                    "7/9"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan ke penyebut 6:<br>• 2/3 = 4/6<br>• 1/2 = 3/6.<br>Karena 3/6 < 4/6, maka <strong>1/2</strong> lebih kecil dari 2/3."
+            },
+            {
+                id: 10,
+                q: "Edo memakan 2/6 kue, Lani memakan 3/8 kue, dan Dayu memakan 1/4 kue. Siapa memakan kue PALING SEDIKIT?",
+                options: [
+                    "Dayu",
+                    "Edo",
+                    "Lani",
+                    "Edo dan Dayu sama"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 6, 8, 4 adalah 24.<br>• Edo = 8/24<br>• Lani = 9/24<br>• Dayu = 6/24<br>Pembilang terkecil adalah 6 (milik <strong>Dayu</strong>)."
+            },
+            {
+                id: 11,
+                q: "Di antara pecahan 3/5, 4/7, dan 2/3, pecahan manakah yang nilainya PALING BESAR?",
+                options: [
+                    "3/5",
+                    "4/7",
+                    "2/3",
+                    "Ketiganya sama besar"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 5, 7, 3 adalah 105.<br>• 3/5 = 63/105<br>• 4/7 = 60/105<br>• 2/3 = 70/105<br>Nilai terbesar adalah 70/105 yaitu <strong>2/3</strong>."
+            },
+            {
+                id: 12,
+                q: "Tanda matematika yang tepat untuk mengisi 5/8 ... 7/12 adalah...",
+                options: [
+                    "<",
+                    "=",
+                    "≤",
+                    ">"
+                ],
+                ans: 3,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 8 dan 12 adalah 24.<br>• 5/8 = 15/24<br>• 7/12 = 14/24<br>Karena 15 > 14, maka tandanya adalah <strong>></strong>."
+            },
+            {
+                id: 13,
+                q: "Ibu membeli tiga buah pita: merah (3/4 m), kuning (5/6 m), dan hijau (7/10 m). Urutkan warna pita dari yang PALING PANJANG!",
+                options: [
+                    "Kuning, Merah, Hijau",
+                    "Merah, Kuning, Hijau",
+                    "Hijau, Merah, Kuning",
+                    "Kuning, Hijau, Merah"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 4, 6, 10 adalah 60.<br>• Merah = 45/60 m<br>• Kuning = 50/60 m<br>• Hijau = 42/60 m<br>Urutan dari terpanjang: <strong>Kuning (50/60), Merah (45/60), Hijau (42/60)</strong>."
+            },
+            {
+                id: 14,
+                q: "Manakah hubungan perbandingan pecahan yang BENAR di bawah ini?",
+                options: [
+                    "2/3 < 3/5",
+                    "3/4 > 7/8",
+                    "4/5 > 3/4",
+                    "1/2 = 3/5"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan 4/5 dan 3/4 ke penyebut 20:<br>• 4/5 = 16/20<br>• 3/4 = 15/20<br>Karena 16/20 > 15/20, maka pernyataan <strong>4/5 > 3/4</strong> BENAR!"
+            },
+            {
+                id: 15,
+                q: "Pak Ali telah menyelesaikan 5/8 pekerjaannya, sedangkan Pak Badu menyelesaikan 2/3 pekerjaannya. Siapa yang menyelesaikan pekerjaan lebih banyak?",
+                options: [
+                    "Pak Ali",
+                    "Pak Badu",
+                    "Keduanya sama banyak",
+                    "Pekerjaan tidak dapat dibandingkan"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 8 dan 3 adalah 24.<br>• Pak Ali = 15/24<br>• Pak Badu = 16/24<br><strong>Pak Badu</strong> menyelesaikan lebih banyak (16/24 > 15/24)."
+            },
+            {
+                id: 16,
+                q: "Urutkan pecahan berikut dari yang TERKECIL: 5/6, 2/3, 3/4",
+                options: [
+                    "5/6, 3/4, 2/3",
+                    "3/4, 2/3, 5/6",
+                    "2/3, 5/6, 3/4",
+                    "2/3, 3/4, 5/6"
+                ],
+                ans: 3,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 6, 3, 4 adalah 12.<br>• 5/6 = 10/12<br>• 2/3 = 8/12<br>• 3/4 = 9/12<br>Urutan dari terkecil: 8/12, 9/12, 10/12 ➔ <strong>2/3, 3/4, 5/6</strong>."
+            },
+            {
+                id: 17,
+                q: "Manakah pecahan di bawah ini yang SENILAI dengan 3/5 ?",
+                options: [
+                    "6/10",
+                    "5/3",
+                    "4/6",
+                    "9/12"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Pecahan senilai diperoleh dengan mengalikan pembilang dan penyebut dengan angka yang sama.<br>(3×2) / (5×2) = <strong>6/10</strong>."
+            },
+            {
+                id: 18,
+                q: "Dari kelompok pecahan 1/2, 3/10, 2/5, 7/10, manakah pecahan yang nilainya PALING KECIL?",
+                options: [
+                    "1/2",
+                    "3/10",
+                    "2/5",
+                    "7/10"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan semua penyebut ke 10:<br>• 1/2 = 5/10<br>• 3/10 = 3/10<br>• 2/5 = 4/10<br>• 7/10 = 7/10<br>Pembilang terkecil adalah 3, yaitu <strong>3/10</strong>."
+            },
+            {
+                id: 19,
+                q: "Tanda matematika yang tepat untuk mengisi 5/9 ... 4/7 adalah...",
+                options: [
+                    ">",
+                    "=",
+                    "<",
+                    "≥"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 9 dan 7 adalah 63.<br>• 5/9 = 35/63<br>• 4/7 = 36/63<br>Karena 35 < 36, maka tandanya adalah <strong><</strong>."
+            },
+            {
+                id: 20,
+                q: "Ani belajar selama 3/4 jam, Budi belajar selama 2/3 jam, dan Cici belajar selama 5/6 jam. Urutkan nama anak dari yang belajar PALING LAMA!",
+                options: [
+                    "Cici, Ani, Budi",
+                    "Ani, Cici, Budi",
+                    "Budi, Ani, Cici",
+                    "Cici, Budi, Ani"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 4, 3, 6 adalah 12.<br>• Ani = 9/12 jam<br>• Budi = 8/12 jam<br>• Cici = 10/12 jam<br>Urutan paling lama: <strong>Cici (10), Ani (9), Budi (8)</strong>."
+            },
+            {
+                id: 21,
+                q: "Pecahan berikut yang nilainya SAMA BESAR dengan 6/8 adalah...",
+                options: [
+                    "4/5",
+                    "2/3",
+                    "5/6",
+                    "9/12"
+                ],
+                ans: 3,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Sederhanakan 6/8 menjadi 3/4 (bagi 2).<br>Ubah 3/4 ke penyebut 12: (3×3)/(4×3) = <strong>9/12</strong>."
+            },
+            {
+                id: 22,
+                q: "Pilihan mana yang menunjukkan urutan pecahan dari TERBESAR ke TERKECIL dengan benar?",
+                options: [
+                    "1/2, 2/3, 3/4",
+                    "4/5, 3/4, 1/2",
+                    "1/2, 4/5, 3/4",
+                    "3/4, 4/5, 1/2"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan ke penyebut 20:<br>• 4/5 = 16/20<br>• 3/4 = 15/20<br>• 1/2 = 10/20<br>Urutan terbesar ke terkecil: 16/20, 15/20, 10/20 ➔ <strong>4/5, 3/4, 1/2</strong>."
+            },
+            {
+                id: 23,
+                q: "Tanda yang tepat untuk mengisi 7/8 ... 11/12 adalah...",
+                options: [
+                    ">",
+                    "=",
+                    "<",
+                    "≠"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 8 dan 12 adalah 24.<br>• 7/8 = 21/24<br>• 11/12 = 22/24<br>Karena 21 < 22, maka <strong>7/8 < 11/12</strong>."
+            },
+            {
+                id: 24,
+                q: "Santi menuangkan air 3/5 liter ke teko, sedangkan Roni menuangkan 4/7 liter. Pernyataan manakah yang BENAR?",
+                options: [
+                    "Santi menuangkan air lebih banyak daripada Roni",
+                    "Roni menuangkan air lebih banyak daripada Santi",
+                    "Santi dan Roni menuangkan air sama banyak",
+                    "Air Roni dua kali lipat lebih banyak"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 5 dan 7 adalah 35.<br>• Santi = 21/35 liter<br>• Roni = 20/35 liter<br><strong>Santi menuangkan air lebih banyak</strong> dari Roni (21/35 > 20/35)."
+            },
+            {
+                id: 25,
+                q: "Urutkan pecahan 2/3, 5/9, 7/12 dari yang TERKECIL!",
+                options: [
+                    "2/3, 7/12, 5/9",
+                    "5/9, 7/12, 2/3",
+                    "7/12, 5/9, 2/3",
+                    "5/9, 2/3, 7/12"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 3, 9, 12 adalah 36.<br>• 2/3 = 24/36<br>• 5/9 = 20/36<br>• 7/12 = 21/36<br>Urutan terkecil: 20/36, 21/36, 24/36 ➔ <strong>5/9, 7/12, 2/3</strong>."
+            },
+            {
+                id: 26,
+                q: "Jika a/6 > 3/4, berapakah nilai bilangan bulat $a$ TERKECIL yang memenuhi?",
+                options: [
+                    "3",
+                    "4",
+                    "5",
+                    "6"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan ke penyebut 12:<br>• 3/4 = 9/12.<br>• a/6 = (2a)/12.<br>Agar (2a)/12 > 9/12, maka nilai 2a minimal harus 10, sehingga nilai $a$ terkecil adalah <strong>5</strong> (karena 2×5=10)."
+            },
+            {
+                id: 27,
+                q: "Tanda matematika yang tepat untuk mengisi 4/9 ... 3/7 adalah...",
+                options: [
+                    "<",
+                    "=",
+                    "≤",
+                    ">"
+                ],
+                ans: 3,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 9 dan 7 adalah 63.<br>• 4/9 = 28/63<br>• 3/7 = 27/63<br>Karena 28 > 27, maka tandanya adalah <strong>></strong>."
+            },
+            {
+                id: 28,
+                q: "Kebun Pak Tani ditanami cabai 1/3 bagian, jagung 2/5 bagian, dan tomat 4/15 bagian. Tanaman manakah yang menempati lahan PALING LUAS?",
+                options: [
+                    "Jagung",
+                    "Cabai",
+                    "Tomat",
+                    "Semuanya sama luas"
+                ],
+                ans: 0,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Samakan penyebut ke 15:<br>• Cabai = 5/15<br>• Jagung = 6/15<br>• Tomat = 4/15<br>Lahan paling luas adalah <strong>Jagung</strong> (6/15)."
+            },
+            {
+                id: 29,
+                q: "Di antara pasangan pecahan berikut, manakah pasangan pecahan yang SENILAI?",
+                options: [
+                    "1/3 dan 2/5",
+                    "3/5 dan 9/15",
+                    "2/4 dan 3/8",
+                    "4/6 dan 5/8"
+                ],
+                ans: 1,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>Pecahan 9/15 jika pembilang dan penyebutnya dibagi 3 akan menghasilkan 3/5. Jadi keduanya senilai!"
+            },
+            {
+                id: 30,
+                q: "Urutkan pecahan berikut dari yang TERBESAR ke TERKECIL: 5/8, 1/2, 3/4",
+                options: [
+                    "1/2, 5/8, 3/4",
+                    "5/8, 3/4, 1/2",
+                    "3/4, 5/8, 1/2",
+                    "3/4, 1/2, 5/8"
+                ],
+                ans: 2,
+                explanation: "<strong>Langkah Pembahasan:</strong><br>KPK penyebut 8, 2, 4 adalah 8.<br>• 5/8 = 5/8<br>• 1/2 = 4/8<br>• 3/4 = 6/8<br>Urutan dari terbesar: 6/8, 5/8, 4/8 ➔ <strong>3/4, 5/8, 1/2</strong>."
+            }
+        ];
+
+        /* -------------------------------------------------------------
+           HELPER FORMATTER: RENDERS FRACTIONS VERTICALLY & FIXES VARS
+        ------------------------------------------------------------- */
+        function formatMathText(str) {
+            if (!str) return '';
+            
+            // Format $variable$ -> italic styled variable
+            let formatted = str.replace(/\$([^$]+)\$/g, '<i class="font-serif font-bold text-amber-700 px-0.5">$1</i>');
+
+            // Format fractions like 3/4 or a/6 or 15/40 into vertical HTML fractions
+            formatted = formatted.replace(/(?<![a-zA-Z0-9="'\/])([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)(?![a-zA-Z0-9="'\/])/g, function(match, top, bottom) {
+                return `<span class="fraction"><span class="top">${top}</span><span class="bottom">${bottom}</span></span>`;
+            });
+
+            return formatted;
+        }
+
+        /* -------------------------------------------------------------
+           STATE MANAGEMENT & LOCALSTORAGE PERSISTENCE
+        ------------------------------------------------------------- */
+        const STORAGE_KEY = 'pecahan_quiz_state_v2';
+        
+        let state = {
+            currentIndex: 0,
+            userAnswers: {},
+            score: 0,
+            isNavHidden: false
+        };
+
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Gagal memuat simpanan kuis", e);
+                }
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            updateHeaderStats();
+        }
+
+        /* -------------------------------------------------------------
+           TOGGLE NAVIGATION PALETTE
+        ------------------------------------------------------------- */
+        function toggleNav() {
+            state.isNavHidden = !state.isNavHidden;
+            applyNavVisibility();
+            saveState();
+        }
+
+        function applyNavVisibility() {
+            const wrapper = document.getElementById('nav-content-wrapper');
+            const btnText = document.getElementById('toggle-nav-text');
+            const btnIcon = document.getElementById('toggle-nav-icon');
+
+            if (state.isNavHidden) {
+                wrapper.classList.add('hidden');
+                btnText.innerText = "Tampilkan Navigasi";
+                btnIcon.innerText = "🙈";
+            } else {
+                wrapper.classList.remove('hidden');
+                btnText.innerText = "Sembunyikan";
+                btnIcon.innerText = "👁️";
+            }
+        }
+
+        /* -------------------------------------------------------------
+           RENDER FUNCTIONS
+        ------------------------------------------------------------- */
+        function initQuiz() {
+            loadState();
+            applyNavVisibility();
+            renderPalette();
+            renderCurrentQuestion();
+            updateHeaderStats();
+        }
+
+        function updateHeaderStats() {
+            const answeredIds = Object.keys(state.userAnswers);
+            const answeredCount = answeredIds.length;
+            
+            let calculatedScore = 0;
+            answeredIds.forEach(qId => {
+                const qObj = quizQuestions.find(q => q.id === parseInt(qId));
+                if (qObj && state.userAnswers[qId] === qObj.ans) {
+                    calculatedScore += 10;
+                }
+            });
+
+            document.getElementById('answered-count').innerText = answeredCount;
+            document.getElementById('live-score').innerText = calculatedScore;
+
+            const banner = document.getElementById('completion-banner');
+            if (answeredCount === quizQuestions.length) {
+                banner.classList.remove('hidden');
+                document.getElementById('final-score').innerText = calculatedScore;
+                
+                let correctCount = calculatedScore / 10;
+                let wrongCount = quizQuestions.length - correctCount;
+
+                document.getElementById('final-correct').innerText = correctCount;
+                document.getElementById('final-wrong').innerText = wrongCount;
+
+                if (calculatedScore >= 240) {
+                    document.getElementById('banner-icon').innerText = '🏆';
+                    document.getElementById('banner-title').innerText = 'Hebat Sekali! Kamu Master Pecahan!';
+                } else if (calculatedScore >= 180) {
+                    document.getElementById('banner-icon').innerText = '🌟';
+                    document.getElementById('banner-title').innerText = 'Bagus Sekali! Pemahamanmu Sangat Baik!';
+                } else {
+                    document.getElementById('banner-icon').innerText = '💪';
+                    document.getElementById('banner-title').innerText = 'Tetap Semangat! Tingkatkan Latihan Lagi!';
+                }
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function renderPalette() {
+            const paletteEl = document.getElementById('question-palette');
+            paletteEl.innerHTML = '';
+
+            quizQuestions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.onclick = () => jumpToQuestion(idx);
+
+                const isAnswered = state.userAnswers.hasOwnProperty(q.id);
+                const isCurrent = idx === state.currentIndex;
+
+                let btnStyle = "w-full aspect-square rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center shadow-sm ";
+
+                if (isCurrent) {
+                    btnStyle += "ring-4 ring-indigo-400 font-extrabold scale-105 z-10 ";
+                }
+
+                if (isAnswered) {
+                    const isCorrect = state.userAnswers[q.id] === q.ans;
+                    if (isCorrect) {
+                        btnStyle += "bg-emerald-500 text-white hover:bg-emerald-600";
+                    } else {
+                        btnStyle += "bg-rose-500 text-white hover:bg-rose-600";
+                    }
+                } else {
+                    btnStyle += "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300";
+                }
+
+                btn.className = btnStyle;
+                btn.innerText = idx + 1;
+                paletteEl.appendChild(btn);
+            });
+        }
+
+        function renderCurrentQuestion() {
+            const q = quizQuestions[state.currentIndex];
+            const isAnswered = state.userAnswers.hasOwnProperty(q.id);
+            const userSelectedOpt = state.userAnswers[q.id];
+
+            // Badge & Progress Fill
+            document.getElementById('question-badge').innerText = `Soal ${state.currentIndex + 1} dari ${quizQuestions.length}`;
+            const fillPct = ((state.currentIndex + 1) / quizQuestions.length) * 100;
+            document.getElementById('progress-bar-fill').style.width = fillPct + '%';
+
+            // Question Text
+            document.getElementById('question-text').innerHTML = formatMathText(q.q);
+
+            // Options Container
+            const optionsEl = document.getElementById('options-container');
+            optionsEl.innerHTML = '';
+
+            const optionLabels = ['A', 'B', 'C', 'D'];
+
+            q.options.forEach((optText, oIdx) => {
+                const optBtn = document.createElement('button');
+                optBtn.onclick = () => selectAnswer(q.id, oIdx);
+
+                let baseClass = "w-full p-3.5 rounded-2xl border-2 text-left font-semibold text-xs sm:text-sm transition flex items-center space-x-3 shadow-sm ";
+
+                if (!isAnswered) {
+                    baseClass += "bg-white border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 text-slate-800 cursor-pointer";
+                } else {
+                    optBtn.disabled = true;
+                    if (oIdx === q.ans) {
+                        baseClass += "bg-emerald-100 border-emerald-500 text-emerald-900 font-bold";
+                    } else if (oIdx === userSelectedOpt) {
+                        baseClass += "bg-rose-100 border-rose-500 text-rose-900 font-bold";
+                    } else {
+                        baseClass += "bg-slate-50 border-slate-200 text-slate-400 opacity-60";
+                    }
+                }
+
+                optBtn.className = baseClass;
+
+                let iconSymbol = optionLabels[oIdx];
+                if (isAnswered) {
+                    if (oIdx === q.ans) iconSymbol = "✅";
+                    else if (oIdx === userSelectedOpt) iconSymbol = "❌";
+                }
+
+                optBtn.innerHTML = `
+                    <span class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs ${
+                        isAnswered && oIdx === q.ans ? 'bg-emerald-500 text-white' : 
+                        isAnswered && oIdx === userSelectedOpt ? 'bg-rose-500 text-white' : 'bg-slate-100 border border-slate-300 text-slate-600'
+                    }">${iconSymbol}</span>
+                    <span class="flex-1">${formatMathText(optText)}</span>
+                `;
+
+                optionsEl.appendChild(optBtn);
+            });
+
+            // Status Tag & Explanation Box
+            const statusTag = document.getElementById('status-tag');
+            const expBox = document.getElementById('explanation-box');
+
+            if (isAnswered) {
+                const isCorrect = userSelectedOpt === q.ans;
+                statusTag.classList.remove('hidden');
+                expBox.classList.remove('hidden');
+
+                if (isCorrect) {
+                    statusTag.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+                    statusTag.innerText = "Jawaban Benar! 🎉";
+
+                    expBox.className = "p-4 rounded-2xl border-2 bg-emerald-50 border-emerald-300 text-emerald-950 text-xs sm:text-sm leading-relaxed";
+                } else {
+                    statusTag.className = "text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300";
+                    statusTag.innerText = "Jawaban Salah ❌";
+
+                    expBox.className = "p-4 rounded-2xl border-2 bg-rose-50 border-rose-300 text-rose-950 text-xs sm:text-sm leading-relaxed";
+                }
+
+                expBox.innerHTML = formatMathText(q.explanation);
+            } else {
+                statusTag.classList.add('hidden');
+                expBox.classList.add('hidden');
+            }
+
+            // Buttons Prev/Next
+            document.getElementById('btn-prev').disabled = state.currentIndex === 0;
+            document.getElementById('btn-prev').style.opacity = state.currentIndex === 0 ? '0.5' : '1';
+
+            const nextBtnText = document.getElementById('next-btn-text');
+            const nextBtnIcon = document.getElementById('next-btn-icon');
+
+            if (state.currentIndex === quizQuestions.length - 1) {
+                nextBtnText.innerText = "Selesai";
+                nextBtnIcon.innerText = "🏁";
+            } else {
+                nextBtnText.innerText = "Selanjutnya";
+                nextBtnIcon.innerText = "➡️";
+            }
+
+            renderPalette();
+        }
+
+        /* -------------------------------------------------------------
+           USER INTERACTIONS
+        ------------------------------------------------------------- */
+        function selectAnswer(qId, optionIndex) {
+            if (state.userAnswers.hasOwnProperty(qId)) return;
+
+            state.userAnswers[qId] = optionIndex;
+            saveState();
+            renderCurrentQuestion();
+        }
+
+        function jumpToQuestion(index) {
+            state.currentIndex = index;
+            saveState();
+            renderCurrentQuestion();
+            window.scrollTo({ top: 120, behavior: 'smooth' });
+        }
+
+        function prevQuestion() {
+            if (state.currentIndex > 0) {
+                state.currentIndex--;
+                saveState();
+                renderCurrentQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (state.currentIndex < quizQuestions.length - 1) {
+                state.currentIndex++;
+                saveState();
+                renderCurrentQuestion();
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function confirmReset() {
+            if (confirm("Apakah kamu yakin ingin mengulang kuis dari awal? Semua jawaban tersimpan akan dihapus.")) {
+                localStorage.removeItem(STORAGE_KEY);
+                state = {
+                    currentIndex: 0,
+                    userAnswers: {},
+                    score: 0,
+                    isNavHidden: false
+                };
+                saveState();
+                initQuiz();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Keyboard Shortcuts Navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                prevQuestion();
+            } else if (e.key === 'ArrowRight') {
+                nextQuestion();
+            }
+        });
+
+        // Initialize App
+        window.onload = function() {
+            initQuiz();
+        };
+    </script>
+</body>
+</html>
